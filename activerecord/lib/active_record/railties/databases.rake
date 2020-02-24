@@ -399,6 +399,16 @@ db_namespace = namespace :db do
       ActiveRecord::Tasks::DatabaseTasks.load_schema_current(:ruby, ENV["SCHEMA"])
     end
 
+    namespace :load do
+      ActiveRecord::Tasks::DatabaseTasks.for_each(databases) do |spec_name|
+        desc "Loads a schema.rb file into the #{spec_name} database "
+        task spec_name => :load_config do
+          db_config = ActiveRecord::Base.configurations.configs_for(env_name: Rails.env, spec_name: spec_name)
+          ActiveRecord::Tasks::DatabaseTasks.load_schema(db_config.config, ActiveRecord::Base.schema_format, nil, ENV["SCHEMA"], db_config.spec_name)
+        end
+      end
+    end
+
     task load_if_ruby: ["db:create", :environment] do
       db_namespace["schema:load"].invoke if ActiveRecord::Base.schema_format == :ruby
     end
